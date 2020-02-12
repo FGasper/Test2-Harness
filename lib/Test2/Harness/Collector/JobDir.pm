@@ -13,7 +13,7 @@ use List::Util qw/first/;
 use Test2::Util qw/ipc_separator/;
 
 use Test2::Harness::Util::UUID qw/gen_uuid/;
-use Test2::Harness::Util::JSON qw/decode_json/;
+use Test2::Harness::Util::JSON qw/decode_json decode_json_non_utf8/;
 use Test2::Harness::Util qw/maybe_read_file open_file/;
 
 use Test2::Harness::Event;
@@ -178,7 +178,7 @@ sub _poll_streams_flush_events {
         for my $tid (keys %{$buffers->{$pid}}) {
             my $buffer = $buffers->{$pid}->{$tid} or next;
             while(my $e = shift @$buffer) {
-                $e = ref($e) ? $e : decode_json($e);
+                $e = ref($e) ? $e : decode_json_non_utf8($e);
                 push @{$self->{+_READY_BUFFER}} => $self->_process_events_line($e);
             }
         }
@@ -198,7 +198,7 @@ sub _poll_streams_ready_buffer_event {
     my $e = shift @{$self->{+_EVENTS_BUFFER}->{$pid}->{$tid}} or return;
     $seen->{$tid}->{$pid}->{$sid} = 1;
 
-    $e = ref($e) ? $e : decode_json($e);
+    $e = ref($e) ? $e : decode_json_non_utf8($e);
 
     die "Stream error: Events skipped or recieved out of order ($e->{stream_id} != $sid)"
         if $e->{stream_id} != $sid;
